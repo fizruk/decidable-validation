@@ -13,13 +13,17 @@ import Data.Void (absurd)
 
 newtype Validation e a s = Validation { getValidation :: a -> s -> e }
 
+instance Monoid e => Monoid (Validation e a s) where
+  mempty = Validation mempty
+  Validation x `mappend` Validation y = Validation (x <> y)
+
 instance Contravariant (Validation e a) where
   contramap f (Validation g) = Validation (\a -> g a . f)
 
 instance Monoid e => Divisible (Validation e a) where
   divide split (Validation f) (Validation g)
     = Validation (\a s -> let (u, v) = split s in f a u <> g a v)
-  conquer = Validation (\_ _ -> mempty)
+  conquer = mempty
 
 instance Monoid e => Decidable (Validation e a) where
   choose k (Validation f) (Validation g)
